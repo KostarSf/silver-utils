@@ -91,4 +91,4 @@ class TagCache {
 	}
 }
 
-export { TagCache, TagCache as default };
+export { TagCache };

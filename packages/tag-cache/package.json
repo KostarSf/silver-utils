@@ -11,20 +11,20 @@
 	},
 	"homepage": "https://github.com/KostarSf/silver-utils/tree/main/packages/tag-cache#readme",
 	"type": "module",
-	"module": "dist/tag-cache.js",
-	"types": "./dist/tag-cache.d.ts",
+	"module": "dist/index.js",
+	"types": "./dist/index.d.ts",
 	"exports": {
 		".": {
 			"default": {
-				"types": "./dist/tag-cache.d.ts",
-				"default": "./dist/tag-cache.js"
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
 			}
 		},
 		"./package.json": "./package.json"
 	},
 	"files": ["dist", "LICENSE", "README.md"],
 	"scripts": {
-		"build": "bun ./scripts/build.ts",
+		"build": "bunup lib/index.ts --format esm --dts",
 		"check": "bun biome check --write"
 	},
 	"keywords": ["tags", "cache", "ttl"]

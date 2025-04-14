@@ -11,20 +11,20 @@
 	},
 	"homepage": "https://github.com/KostarSf/silver-utils/tree/main/packages/rest-client#readme",
 	"type": "module",
-	"module": "dist/rest-client.js",
-	"types": "./dist/rest-client.d.ts",
+	"module": "dist/index.js",
+	"types": "./dist/index.d.ts",
 	"exports": {
 		".": {
 			"default": {
-				"types": "./dist/rest-client.d.ts",
-				"default": "./dist/rest-client.js"
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
 			}
 		},
 		"./package.json": "./package.json"
 	},
 	"files": ["dist", "LICENSE", "README.md"],
 	"scripts": {
-		"build": "bun ./scripts/build.ts",
+		"build": "bunup lib/index.ts --format esm --dts",
 		"check": "bun biome check --write"
 	},
 	"keywords": ["rest", "client"],

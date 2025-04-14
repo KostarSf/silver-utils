@@ -224,4 +224,4 @@ class RestClient<TDefaultSessionPayload = unknown> {
 	}
 }
 
-export { BearerSession, RestClient, RestClient as default, type CallResult, type ISession };
+export { RestClient };
