@@ -1,13 +1,22 @@
+import type { CachePayload, CacheSetParameters } from "./tag-cache.types";
+
 class TagCache {
-	#cache = new Map<string, { value: unknown; expires?: number; tags?: string[] }>();
+	#cache = new Map<string, CachePayload>();
 	#tags: Record<string, Set<string> | undefined> = {};
 
-	set<TValue = unknown>(key: string, value: TValue, options?: { tags?: string[]; ttl?: number }): void {
-		const tags = options?.tags ?? [key];
+	/**
+	 * Set cached value.
+	 */
+	set<TValue = unknown>(key: string, value: TValue, parameters?: CacheSetParameters): void {
+		if (parameters?.ttl !== undefined && parameters.ttl <= 0) {
+			return;
+		}
+
+		const tags = parameters?.tags ?? [key];
 
 		this.#cache.set(key, {
 			value: structuredClone(value),
-			expires: options?.ttl ? Date.now() + options.ttl : undefined,
+			expires: parameters?.ttl ? Date.now() + parameters.ttl : undefined,
 			tags: tags,
 		});
 
@@ -17,6 +26,10 @@ class TagCache {
 		}
 	}
 
+	/**
+	 * Get cached value by its key.
+	 * @returns Cached value or `null`.
+	 */
 	get<TValue = unknown>(key: string): TValue | null {
 		const entry = this.#cache.get(key);
 		if (!entry) {
@@ -31,6 +44,10 @@ class TagCache {
 		return structuredClone(entry.value) as TValue;
 	}
 
+	/**
+	 * Delete cached value by its key.
+	 * @returns `true` if walue was deleted and `false` otherwise.
+	 */
 	delete(key: string): boolean {
 		const entry = this.#cache.get(key);
 		this.#cache.delete(key);
@@ -54,6 +71,12 @@ class TagCache {
 		return true;
 	}
 
+	/**
+	 * Invalidate cached data by its tags. When called without parameter, all cache will be invalidated.
+	 *
+	 * @param tags 	A list with tag names for invalidate or `undefined` for invalidate all cache.
+	 * 				Empty list will do nothing.
+	 */
 	invalidate(tags?: string[]): void {
 		for (const tag of tags ?? Object.keys(this.#tags)) {
 			const keysSet = this.#tags[tag];
