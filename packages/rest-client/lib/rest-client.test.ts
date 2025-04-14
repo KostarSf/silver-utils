@@ -18,17 +18,35 @@ describe("RestClient", () => {
 		}
 
 		async getPost(id: number) {
-			return this.call<Post, object>(`posts/${id}`);
+			return this.call<Post, object>(`posts/${id}`, {
+				cache: { tags: ["POSTS", `POSTS:${id}`] },
+			});
+		}
+
+		async findPosts() {
+			return this.call<Post[], object>("posts", {
+				cache: { tags: ["POSTS"] },
+			});
+		}
+
+		async findPostsWithSmallCacheTtl() {
+			return this.call<Post[], object>("posts", {
+				cache: { tags: ["POSTS"], ttl: 1 },
+			});
 		}
 
 		async createPost(dto: CreatePostDto) {
-			return this.call<Post>("posts", { method: "POST", body: dto });
+			return this.call<Post>("posts", {
+				method: "POST",
+				body: dto,
+				invalidateTags: ["POSTS"],
+			});
 		}
 	}
 
-	const client = new JsonPlaceholderClient();
-
 	test("success GET call", async () => {
+		const client = new JsonPlaceholderClient();
+
 		const postResult = await client.getPost(1);
 
 		expect(postResult.data).toBeTruthy();
@@ -45,6 +63,8 @@ describe("RestClient", () => {
 	});
 
 	test("success POST call", async () => {
+		const client = new JsonPlaceholderClient();
+
 		const dto: CreatePostDto = { title: "foo", body: "bar", userId: 1 };
 		const expectedResult: Post = { ...dto, id: 101 };
 
@@ -62,6 +82,8 @@ describe("RestClient", () => {
 	});
 
 	test("error GET call", async () => {
+		const client = new JsonPlaceholderClient();
+
 		const postResult = await client.getPost(101);
 
 		expect(postResult.data).toBe(null);
@@ -73,5 +95,103 @@ describe("RestClient", () => {
 		expect(post).toBe(null);
 		expect(error).toEqual({});
 		expect(status).toBe(404);
+	});
+
+	test("cache success call", async () => {
+		const client = new JsonPlaceholderClient();
+
+		let startTime = Date.now();
+		const postResult = await client.getPost(1);
+		let duration = Date.now() - startTime;
+
+		expect(duration).toBeGreaterThan(10);
+		expect(postResult.data).toBeTruthy();
+		expect(postResult.data).toBeObject();
+		expect(postResult.error).toBe(null);
+		expect(postResult.status).toBe(200);
+
+		startTime = Date.now();
+		const cachedResult = await client.getPost(1);
+		duration = Date.now() - startTime;
+
+		expect(duration).toBeLessThanOrEqual(10);
+		expect(cachedResult.data).toEqual(postResult.data);
+		expect(cachedResult.data !== postResult.data).toBeTrue();
+		expect(postResult.error).toBe(null);
+		expect(postResult.status).toBe(200);
+
+		startTime = Date.now();
+		const secondPostResult = await client.getPost(2);
+		duration = Date.now() - startTime;
+
+		expect(duration).toBeGreaterThan(10);
+	});
+
+	test("invalidate cache on mutations", async () => {
+		const client = new JsonPlaceholderClient();
+
+		let startTime = Date.now();
+		const postsResult = await client.findPosts();
+		let duration = Date.now() - startTime;
+
+		expect(duration).toBeGreaterThan(10);
+		expect(postsResult.data).toBeTruthy();
+		expect(postsResult.data).toBeArray();
+		expect(postsResult.error).toBe(null);
+		expect(postsResult.status).toBe(200);
+
+		startTime = Date.now();
+		const secondPostsResult = await client.findPosts();
+		duration = Date.now() - startTime;
+
+		expect(duration).toBeLessThanOrEqual(10);
+
+		await client.createPost({ title: "foo", body: "bar", userId: 1 });
+
+		startTime = Date.now();
+		const thirdPostsResult = await client.findPosts();
+		duration = Date.now() - startTime;
+
+		expect(duration).toBeGreaterThan(10);
+		expect(postsResult.data).toBeTruthy();
+		expect(postsResult.data).toBeArray();
+		expect(postsResult.error).toBe(null);
+		expect(postsResult.status).toBe(200);
+	});
+
+	test("cache expires", async () => {
+		const client = new JsonPlaceholderClient();
+
+		let startTime = Date.now();
+		const postsResult = await client.findPostsWithSmallCacheTtl();
+		let duration = Date.now() - startTime;
+
+		expect(duration).toBeGreaterThan(10);
+		expect(postsResult.data).toBeTruthy();
+		expect(postsResult.data).toBeArray();
+		expect(postsResult.error).toBe(null);
+		expect(postsResult.status).toBe(200);
+
+		await Bun.sleep(900);
+
+		startTime = Date.now();
+		const secondPostsResult = await client.findPosts();
+		duration = Date.now() - startTime;
+
+		expect(duration).toBeLessThanOrEqual(10);
+		expect(postsResult.data).toBeTruthy();
+		expect(postsResult.data).toBeArray();
+		expect(secondPostsResult.status).toBe(200);
+
+		await Bun.sleep(200);
+
+		startTime = Date.now();
+		const thirdPostsResult = await client.findPosts();
+		duration = Date.now() - startTime;
+
+		expect(duration).toBeGreaterThan(10);
+		expect(postsResult.data).toBeTruthy();
+		expect(postsResult.data).toBeArray();
+		expect(thirdPostsResult.status).toBe(200);
 	});
 });
