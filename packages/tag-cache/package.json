@@ -6,9 +6,10 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git@github.com:KostarSf/silver-utils.git",
+		"url": "git+ssh://git@github.com/KostarSf/silver-utils.git",
 		"directory": "packages/tag-cache"
 	},
+	"homepage": "https://github.com/KostarSf/silver-utils/tree/main/packages/tag-cache#readme",
 	"type": "module",
 	"module": "dist/tag-cache.js",
 	"types": "./dist/tag-cache.d.ts",
