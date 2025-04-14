@@ -1,6 +1,6 @@
 {
 	"name": "@silver-utils/tag-cache",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "A simple memory cache with invalidation by tags",
 	"author": "Maksim Peskov <kostarsf@gmail.com>",
 	"license": "MIT",
