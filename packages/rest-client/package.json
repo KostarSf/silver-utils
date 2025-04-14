@@ -1,6 +1,6 @@
 {
 	"name": "@silver-utils/rest-client",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "A simple REST client built on top of Web Fetch API",
 	"author": "Maksim Peskov <kostarsf@gmail.com>",
 	"license": "MIT",
