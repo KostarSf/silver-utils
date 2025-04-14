@@ -1,7 +1,7 @@
 {
 	"name": "silver-utils",
 	"private": true,
-	"workspaces": ["packages/*"],
+	"workspaces": ["packages/*", "playground"],
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",
 		"@types/bun": "^1.2.9",

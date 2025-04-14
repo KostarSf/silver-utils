@@ -1,0 +1,15 @@
+{
+	"name": "playground",
+	"private": "true",
+	"type": "module",
+	"dependencies": {
+		"@silver-utils/rest-client": "*:workspace",
+		"zod": "^4.0.0-beta.20250414T061543"
+	},
+	"devDependencies": {
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	}
+}
