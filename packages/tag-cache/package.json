@@ -1,0 +1,30 @@
+{
+	"name": "@silver-utils/tag-cache",
+	"version": "0.1.0",
+	"description": "A simple memory cache with invalidation by tags",
+	"author": "Maksim Peskov <kostarsf@gmail.com>",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git@github.com:KostarSf/silver-utils.git",
+		"directory": "packages/tag-cache"
+	},
+	"type": "module",
+	"module": "dist/tag-cache.js",
+	"types": "./dist/tag-cache.d.ts",
+	"exports": {
+		".": {
+			"default": {
+				"types": "./dist/tag-cache.d.ts",
+				"default": "./dist/tag-cache.js"
+			}
+		},
+		"./package.json": "./package.json"
+	},
+	"files": ["dist", "LICENSE", "README.md"],
+	"scripts": {
+		"build": "bun ./scripts/build.ts",
+		"check": "bun biome check --write"
+	},
+	"keywords": ["tags", "cache", "ttl"]
+}

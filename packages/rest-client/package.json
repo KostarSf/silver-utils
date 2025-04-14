@@ -1,0 +1,33 @@
+{
+	"name": "@silver-utils/rest-client",
+	"version": "0.1.0",
+	"description": "A simple REST client built on top of Web Fetch API",
+	"author": "Maksim Peskov <kostarsf@gmail.com>",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git@github.com:KostarSf/silver-utils.git",
+		"directory": "packages/rest-client"
+	},
+	"type": "module",
+	"module": "dist/rest-client.js",
+	"types": "./dist/rest-client.d.ts",
+	"exports": {
+		".": {
+			"default": {
+				"types": "./dist/rest-client.d.ts",
+				"default": "./dist/rest-client.js"
+			}
+		},
+		"./package.json": "./package.json"
+	},
+	"files": ["dist", "LICENSE", "README.md"],
+	"scripts": {
+		"build": "bun ./scripts/build.ts",
+		"check": "bun biome check --write"
+	},
+	"keywords": ["rest", "client"],
+	"devDependencies": {
+		"@silver-utils/tag-cache": "*:workspace"
+	}
+}
