@@ -21,7 +21,7 @@ class RestClient<TSessionPayload = unknown> {
 		this.#basePath = basePath;
 	}
 
-	protected async call<TData, TError>(
+	protected async call<TData = unknown, TError = unknown>(
 		path: string,
 		parameters?: CallParameters,
 	): Promise<CallResult<TData, TError>> {

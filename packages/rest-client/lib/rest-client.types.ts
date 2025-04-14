@@ -25,18 +25,16 @@ interface CallCacheParameters {
 	tags?: string[];
 }
 
-export interface CallSuccess<TData = unknown> {
+export type CallSuccess<TData = unknown> = {
 	data: TData;
 	error: null;
 	status: number;
-	[Symbol.iterator]: () => Generator<[TData, null, number]>;
-}
+} & readonly [TData, null, number];
 
-export interface CallError<TError = unknown> {
+export type CallError<TError = unknown> = {
 	data: null;
 	error: TError;
 	status: number;
-	[Symbol.iterator]: () => Generator<[null, TError, number]>;
-}
+} & readonly [null, TError, number];
 
 export type CallResult<TData = unknown, TError = unknown> = CallSuccess<TData> | CallError<TError>;

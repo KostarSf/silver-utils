@@ -9,16 +9,24 @@ function createCallResult<TData extends null, TError>(
 	data: TData,
 	error: TError,
 	status: number,
-): CallError<TData>;
-function createCallResult<TData, TError>(data: TData, error: TError, status: number) {
-	return {
+): CallError<TError>;
+function createCallResult<TData = unknown, TError = unknown>(
+	data: TData,
+	error: TError,
+	status: number,
+): CallResult<TData, TError> {
+	const result = {
 		data,
 		error,
 		status,
 		[Symbol.iterator]: function* () {
-			yield [data, error, status];
+			yield data;
+			yield error;
+			yield status;
 		},
-	} as CallResult<TData, TError>;
+	};
+
+	return result as unknown as CallResult<TData, TError>;
 }
 
 export { createCallResult };
