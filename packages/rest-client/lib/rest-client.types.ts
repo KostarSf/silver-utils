@@ -1,3 +1,24 @@
+import type { SessionOrConstructor } from "./session.types";
+
+export interface RestClientParameters {
+	/** A base path for all API calls. */
+	basePath?: string;
+	/**
+	 * An `ISession` objects which will be used for session management.
+	 * If none, a {@link BearerSession} will be used by default.
+	 */
+	sessions?: SessionOrConstructor[];
+	/**
+	 * What session setting will be used for API calls by default:
+	 * - `false`: Session will not be used if not set explicitly
+	 * - `true`: A default session will be used if not set explicitly
+	 * - `string`: Session with the given name will be used if not set explicitly
+	 *
+	 * @default false
+	 */
+	defaultSession?: string | boolean;
+}
+
 export type HttpMethod = "GET" | "POST" | "DELETE" | "PUT" | "PATCH" | (string & {});
 
 export type EncType =
@@ -12,13 +33,13 @@ export interface CallParameters {
 	query?: SearchQuery;
 	headers?: Bun.HeadersInit;
 	encType?: EncType;
-	// useSession?: boolean;
+	session?: boolean | string;
 	cache?: boolean | CallCacheParameters;
 	invalidateTags?: string[];
 }
 
 export type SearchQuery = Record<string, unknown> | URLSearchParams;
-export type BodyPayload = string | FormData | Record<string, unknown>;
+export type BodyPayload = string | FormData | object;
 
 interface CallCacheParameters {
 	ttl?: number;

@@ -1,4 +1,6 @@
 import TagCache from "@kostar/tag-cache";
+
+import { BearerSession } from "./bearer-session";
 import type {
 	BodyPayload,
 	CallError,
@@ -6,18 +8,74 @@ import type {
 	CallResult,
 	CallSuccess,
 	EncType,
+	RestClientParameters,
 	SearchQuery,
 } from "./rest-client.types";
-import { createCallResult } from "./utils";
+import type { ISession } from "./session.types";
+import { InvalidSessionNameError, createCallResult } from "./utils";
 
-class RestClient<TSessionPayload = unknown> {
-	// #session: TSessionPayload | null = null;
+class RestClient<TDefaultSessionPayload = unknown> {
+	#sessionStore = new Map<string, ISession>();
 	#cache = new TagCache();
 
 	#basePath: string;
+	#defaultSession: string | boolean;
 
-	constructor(basePath = "") {
-		this.#basePath = basePath;
+	/**
+	 * Creates an instance of RestClient.
+	 */
+	constructor(parameters?: RestClientParameters) {
+		this.#basePath = parameters?.basePath ?? "";
+		this.#defaultSession = parameters?.defaultSession ?? false;
+
+		for (const sessionLike of parameters?.sessions ?? [BearerSession]) {
+			const session = typeof sessionLike === "function" ? new sessionLike() : sessionLike;
+			this.#sessionStore.set(session.name, session);
+		}
+	}
+
+	/**
+	 * Check if the given session is active
+	 * @param sessionName The name of the session. Uses default session if `undefined`.
+	 */
+	hasSession(sessionName?: string): boolean {
+		const session = this.#getSession(sessionName);
+		return session.active;
+	}
+
+	async setSession(payload: TDefaultSessionPayload | null): Promise<void>;
+	async setSession<TPayload = TDefaultSessionPayload>(
+		sessionName: string,
+		payload: TPayload | null,
+	): Promise<void>;
+	async setSession<TPayload = TDefaultSessionPayload>(
+		payloadOrSessionName: TPayload | null | string,
+		mayBePayload?: TPayload | null,
+	): Promise<void> {
+		const payload = mayBePayload !== undefined ? mayBePayload : (payloadOrSessionName as TPayload);
+		const sessionName = mayBePayload !== undefined ? (payloadOrSessionName as string) : undefined;
+
+		const session = this.#getSession<TPayload>(sessionName);
+		await session.set(payload);
+	}
+
+	getSession<TPayload = TDefaultSessionPayload>(sessionName?: string): TPayload | null {
+		return this.#getSession<TPayload>(sessionName).get();
+	}
+
+	#getSession<TPayload = TDefaultSessionPayload>(sessionName?: string): ISession<TPayload> {
+		let session: ISession<TPayload> | undefined = undefined;
+		if (sessionName !== undefined) {
+			session = this.#sessionStore.get(sessionName) as ISession<TPayload> | undefined;
+		} else {
+			session = this.#sessionStore.values().next().value as ISession<TPayload> | undefined;
+		}
+
+		if (!session) {
+			throw new InvalidSessionNameError(sessionName);
+		}
+
+		return session;
 	}
 
 	protected async call<TData = unknown, TError = unknown>(
@@ -33,7 +91,8 @@ class RestClient<TSessionPayload = unknown> {
 			return Promise.resolve(createCallResult(cachedResult, null, 200));
 		}
 
-		const headers = this.#prepareHeaders(encType, parameters?.headers);
+		const session = parameters?.session ?? this.#defaultSession;
+		const headers = await this.#prepareHeaders(encType, session, parameters?.headers);
 		const body = this.#prepareBody(encType, parameters?.body);
 
 		const response = await fetch(this.#basePath + fullPath, { method, headers, body });
@@ -89,11 +148,25 @@ class RestClient<TSessionPayload = unknown> {
 		return `?${searchParams}`;
 	}
 
-	#prepareHeaders(encType: EncType | undefined, init: Bun.HeadersInit | undefined): Headers {
+	async #prepareHeaders(
+		encType: EncType | undefined,
+		sessionName: string | boolean,
+		init: Bun.HeadersInit | undefined,
+	): Promise<Headers> {
 		const headers = new Headers(init);
 
 		if (encType && !headers.has("content-type")) {
 			headers.set("content-type", `${encType}; charset=utf-8`);
+		}
+
+		if (sessionName !== false) {
+			const session = this.#getSession(typeof sessionName === "string" ? sessionName : undefined);
+			await session.update(this.#basePath);
+
+			const authorization = await session.serialize();
+			if (authorization) {
+				headers.set("Authorization", authorization);
+			}
 		}
 
 		return headers;
@@ -151,4 +224,4 @@ class RestClient<TSessionPayload = unknown> {
 	}
 }
 
-export { RestClient as default, RestClient };
+export { BearerSession, RestClient, RestClient as default, type CallResult, type ISession };

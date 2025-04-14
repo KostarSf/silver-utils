@@ -29,4 +29,10 @@ function createCallResult<TData = unknown, TError = unknown>(
 	return result as unknown as CallResult<TData, TError>;
 }
 
-export { createCallResult };
+class InvalidSessionNameError extends Error {
+	constructor(sessionName?: string) {
+		super(`Can't find session'${typeof sessionName === "string" ? ` with name ${sessionName}.` : "."}'`);
+	}
+}
+
+export { createCallResult, InvalidSessionNameError };
