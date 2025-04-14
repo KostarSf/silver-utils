@@ -6,7 +6,6 @@ import type {
 	CallResult,
 	CallSuccess,
 	EncType,
-	HttpMethod,
 	SearchQuery,
 } from "./rest-client.types";
 import { createCallResult } from "./utils";
@@ -152,4 +151,4 @@ class RestClient<TSessionPayload = unknown> {
 	}
 }
 
-export { RestClient, RestClient as default };
+export { RestClient as default, RestClient };

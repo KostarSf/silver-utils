@@ -1,6 +1,7 @@
-import { test, expect } from "bun:test";
-import TagCache from "./tag-cache";
 import { sleepSync } from "bun";
+import { expect, test } from "bun:test";
+
+import TagCache from "./tag-cache";
 
 test("can cache by key", () => {
 	const cache = new TagCache();
