@@ -1,4 +1,4 @@
-type PromiseLike<TType> = TType | Promise<TType>;
+import type { MayBePromise } from "./types";
 
 export interface ISession<TPayload = unknown> {
 	name: string;
@@ -11,16 +11,16 @@ export interface ISession<TPayload = unknown> {
 	 *
 	 * @returns Updated session payload or `null`
 	 */
-	update(basePath: string): PromiseLike<void>;
+	update(basePath: string): MayBePromise<void>;
 
-	set(payload: TPayload | null): PromiseLike<void>;
+	set(payload: TPayload | null): MayBePromise<void>;
 
 	get(): TPayload | null;
 
 	/**
 	 * Serialize session into Authorization header value
 	 */
-	serialize(): PromiseLike<string | undefined>;
+	serialize(): MayBePromise<string | undefined>;
 }
 
 export type SessionOrConstructor<TPayload = unknown> = { new (): ISession<TPayload> } | ISession<TPayload>;

@@ -1,4 +1,5 @@
 import type { SessionOrConstructor } from "./session.types";
+import type { EncType, HttpMethod, MayBePromise } from "./types";
 
 export interface RestClientParameters {
 	/** A base path for all API calls. */
@@ -19,15 +20,7 @@ export interface RestClientParameters {
 	defaultSession?: string | boolean;
 }
 
-export type HttpMethod = "GET" | "POST" | "DELETE" | "PUT" | "PATCH" | (string & {});
-
-export type EncType =
-	| "application/x-www-form-urlencoded"
-	| "multipart/form-data"
-	| "text/plain"
-	| "application/json";
-
-export interface CallParameters {
+export interface CallParameters<TData = unknown, TError = unknown> {
 	method?: HttpMethod;
 	body?: BodyPayload;
 	query?: SearchQuery;
@@ -36,12 +29,15 @@ export interface CallParameters {
 	session?: boolean | string;
 	cache?: boolean | CallCacheParameters;
 	invalidateTags?: string[];
+	processData?: (response: Response) => MayBePromise<TData>;
+	processError?: (response: Response) => MayBePromise<TError>;
 }
 
 export type SearchQuery = Record<string, unknown> | URLSearchParams;
 export type BodyPayload = string | FormData | object;
 
 interface CallCacheParameters {
+	/** Data cache duration in seconds. Only success calls can be cached (i.e. status code < 400) */
 	ttl?: number;
 	tags?: string[];
 }

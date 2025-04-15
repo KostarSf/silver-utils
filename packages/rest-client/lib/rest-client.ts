@@ -7,11 +7,11 @@ import type {
 	CallParameters,
 	CallResult,
 	CallSuccess,
-	EncType,
 	RestClientParameters,
 	SearchQuery,
 } from "./rest-client.types";
 import type { ISession } from "./session.types";
+import type { EncType, MayBePromise } from "./types";
 import { InvalidSessionNameError, createCallResult } from "./utils";
 
 class RestClient<TDefaultSessionPayload = unknown> {
@@ -80,7 +80,7 @@ class RestClient<TDefaultSessionPayload = unknown> {
 
 	protected async call<TData = unknown, TError = unknown>(
 		path: string,
-		parameters?: CallParameters,
+		parameters?: CallParameters<TData, TError>,
 	): Promise<CallResult<TData, TError>> {
 		const method = parameters?.method ?? "GET";
 		const fullPath = path + this.#prepareSearchParams(parameters?.query);
@@ -96,7 +96,11 @@ class RestClient<TDefaultSessionPayload = unknown> {
 		const body = this.#prepareBody(encType, parameters?.body);
 
 		const response = await fetch(this.#basePath + fullPath, { method, headers, body });
-		const callResult = await this.#processResult<TData, TError>(response);
+		const callResult = await this.#processResult<TData, TError>(
+			response,
+			parameters?.processData,
+			parameters?.processError,
+		);
 
 		if (parameters?.cache && callResult.status < 400) {
 			this.#cache.set(
@@ -202,7 +206,27 @@ class RestClient<TDefaultSessionPayload = unknown> {
 		return formData;
 	}
 
-	async #processResult<TData, TError>(response: Response): Promise<CallResult<TData, TError>> {
+	async #processResult<TData, TError>(
+		response: Response,
+		processData: ((response: Response) => MayBePromise<TData>) | undefined,
+		processError: ((response: Response) => MayBePromise<TError>) | undefined,
+	): Promise<CallResult<TData, TError>> {
+		if (!response.ok) {
+			const error = processError
+				? await processError(response)
+				: await this.#defaultDataProcessor<TError>(response);
+
+			return createCallResult(null, error, response.status) as CallError<TError>;
+		}
+
+		const data = processData
+			? await processData(response)
+			: await this.#defaultDataProcessor<TData>(response);
+
+		return createCallResult(data, null, response.status) as CallSuccess<TData>;
+	}
+
+	async #defaultDataProcessor<TData>(response: Response): Promise<TData> {
 		let data: unknown = null;
 
 		if (response.status !== 204 && response.headers.get("content-type")?.includes("application/json")) {
@@ -213,14 +237,11 @@ class RestClient<TDefaultSessionPayload = unknown> {
 			data = await response.text();
 		}
 
-		if (!response.ok) {
-			const error = response.status >= 500 ? `${response.status}: ${response.statusText}` : data;
-			console.error(data || error);
-
-			return createCallResult(null, error, response.status) as CallError<TError>;
+		if (!response.ok && response.status >= 500) {
+			data = `${response.status}: ${response.statusText}`;
 		}
 
-		return createCallResult(data, null, response.status) as CallSuccess<TData>;
+		return data as TData;
 	}
 }
 

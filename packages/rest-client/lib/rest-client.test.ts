@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import RestClient from "./rest-client";
+import { RestClient } from "./rest-client";
 
 describe("RestClient", () => {
 	interface Post {
@@ -14,7 +14,7 @@ describe("RestClient", () => {
 
 	class JsonPlaceholderClient extends RestClient {
 		constructor() {
-			super("https://jsonplaceholder.typicode.com/");
+			super({ basePath: "https://jsonplaceholder.typicode.com/" });
 		}
 
 		async getPost(id: number) {
@@ -193,5 +193,28 @@ describe("RestClient", () => {
 		expect(postsResult.data).toBeTruthy();
 		expect(postsResult.data).toBeArray();
 		expect(thirdPostsResult.status).toBe(200);
+	});
+
+	test("custom data process", async () => {
+		class JsonPlaceholderClient extends RestClient {
+			constructor() {
+				super({ basePath: "https://jsonplaceholder.typicode.com/" });
+			}
+
+			async getPost(id: number) {
+				return this.call<Response, string>(`posts/${id}`, {
+					processError: (response) => `${response.status} - ${response.statusText}`,
+					processData: (response) => response,
+				});
+			}
+		}
+
+		const client = new JsonPlaceholderClient();
+
+		const { error } = await client.getPost(101);
+		expect(error).toBe("404 - Not Found");
+
+		const [post] = await client.getPost(1);
+		expect(post).toBeInstanceOf(Response);
 	});
 });
