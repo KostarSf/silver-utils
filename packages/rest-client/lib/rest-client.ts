@@ -35,8 +35,10 @@ class RestClient<TDefaultSessionPayload = unknown> {
 	}
 
 	/**
-	 * Check if the given session is active
+	 * Check if the given session is active and can be used for authorized requests.
+	 *
 	 * @param sessionName The name of the session. Uses default session if `undefined`.
+	 * @returns `true` if session is active and `false` othervise.
 	 */
 	hasSession(sessionName?: string): boolean {
 		const session = this.#getSession(sessionName);
@@ -59,8 +61,16 @@ class RestClient<TDefaultSessionPayload = unknown> {
 		await session.set(payload);
 	}
 
+	/**
+	 * Get the session payload if the given session is active and can be used for authorized requests.
+	 * Returns `null` if session is not active.
+	 *
+	 * @param sessionName The name of the session. Uses default session if `undefined`.
+	 * @returns Session payload or `null` if session is not active.
+	 */
 	getSession<TPayload = TDefaultSessionPayload>(sessionName?: string): TPayload | null {
-		return this.#getSession<TPayload>(sessionName).get();
+		const session = this.#getSession<TPayload>(sessionName);
+		return session.active ? session.get() : null;
 	}
 
 	#getSession<TPayload = TDefaultSessionPayload>(sessionName?: string): ISession<TPayload> {
