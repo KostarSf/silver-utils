@@ -20,6 +20,7 @@ class RestClient<TDefaultSessionPayload = unknown> {
 
 	#basePath: string;
 	#defaultSession: string | boolean;
+	#bodyRemoveUndefinedFields: boolean;
 
 	/**
 	 * Creates an instance of RestClient.
@@ -27,6 +28,7 @@ class RestClient<TDefaultSessionPayload = unknown> {
 	constructor(parameters?: RestClientParameters) {
 		this.#basePath = parameters?.basePath ?? "";
 		this.#defaultSession = parameters?.defaultSession ?? false;
+		this.#bodyRemoveUndefinedFields = parameters?.bodyRemoveUndefinedFields ?? false;
 
 		for (const sessionLike of parameters?.sessions ?? [BearerSession]) {
 			const session = typeof sessionLike === "function" ? new sessionLike() : sessionLike;
@@ -103,7 +105,11 @@ class RestClient<TDefaultSessionPayload = unknown> {
 
 		const session = parameters?.session ?? this.#defaultSession;
 		const headers = await this.#prepareHeaders(encType, session, parameters?.headers);
-		const body = this.#prepareBody(encType, parameters?.body);
+		const body = this.#prepareBody(
+			encType,
+			parameters?.bodyRemoveUndefinedFields ?? this.#bodyRemoveUndefinedFields,
+			parameters?.body,
+		);
 
 		const response = await fetch(this.#basePath + fullPath, { method, headers, body });
 		const callResult = await this.#processResult<TData, TError>(
@@ -190,6 +196,7 @@ class RestClient<TDefaultSessionPayload = unknown> {
 
 	#prepareBody(
 		encType: EncType | undefined,
+		removeUndefinedFields: boolean,
 		bodyPayload: BodyPayload | undefined,
 	): string | FormData | undefined {
 		if (!bodyPayload || typeof bodyPayload === "string" || bodyPayload instanceof FormData) {
@@ -197,7 +204,18 @@ class RestClient<TDefaultSessionPayload = unknown> {
 		}
 
 		if (encType === "application/json" || encType === "text/plain") {
-			return JSON.stringify(bodyPayload);
+			if (!removeUndefinedFields) {
+				return JSON.stringify(bodyPayload);
+			}
+
+			const processedBody: Record<string, unknown> = {};
+			for (const [key, value] of Object.entries(bodyPayload)) {
+				if (value !== undefined) {
+					processedBody[key] = value;
+				}
+			}
+
+			return JSON.stringify(processedBody);
 		}
 
 		const formData = new FormData();

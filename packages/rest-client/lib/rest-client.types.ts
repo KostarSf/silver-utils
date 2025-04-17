@@ -5,6 +5,13 @@ export interface RestClientParameters {
 	/** A base path for all API calls. */
 	basePath?: string;
 	/**
+	 * Remove `undefined` fields from plain object body when performing request.
+	 * Does not process nested objects. This is the default value which may be overriden.
+	 *
+	 * @default false
+	 */
+	bodyRemoveUndefinedFields?: boolean;
+	/**
 	 * An `ISession` objects which will be used for session management.
 	 * If none, a {@link BearerSession} will be used by default.
 	 */
@@ -23,6 +30,7 @@ export interface RestClientParameters {
 export interface CallParameters<TData = unknown, TError = unknown> {
 	method?: HttpMethod;
 	body?: BodyPayload;
+	bodyRemoveUndefinedFields?: boolean;
 	query?: SearchQuery;
 	headers?: Bun.HeadersInit;
 	encType?: EncType;
