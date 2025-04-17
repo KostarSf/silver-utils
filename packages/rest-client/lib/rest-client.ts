@@ -154,6 +154,8 @@ class RestClient<TDefaultSessionPayload = unknown> {
 				} else {
 					searchParams.set(key, JSON.stringify(value));
 				}
+
+				continue;
 			}
 
 			searchParams.set(key, String(value));
